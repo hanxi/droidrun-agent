@@ -12,14 +12,13 @@ import pytest_asyncio
 
 from droidrun_agent import PortalWSClient
 
-HOST = "localhost"
-PORT = 8081
+BASE_URL = "ws://localhost:8081"
 TOKEN = "eabfc22e-e795-4862-8046-b109de1ae2e1"
 
 
 @pytest_asyncio.fixture
 async def client():
-    async with PortalWSClient(HOST, PORT, token=TOKEN) as c:
+    async with PortalWSClient(BASE_URL, token=TOKEN) as c:
         yield c
 
 
@@ -28,7 +27,7 @@ async def client():
 
 @pytest.mark.asyncio
 async def test_connect_disconnect():
-    ws = PortalWSClient(HOST, PORT, token=TOKEN)
+    ws = PortalWSClient(BASE_URL, token=TOKEN)
     await ws.connect()
     await ws.close()
 
@@ -80,7 +79,9 @@ async def test_take_screenshot(client: PortalWSClient):
     assert isinstance(png, bytes)
     assert len(png) > 100
     assert png[:4] == b"\x89PNG", "Expected PNG magic bytes"
-    print(f"screenshot: {len(png)} bytes")
+    with open("tmp/ws_screenshot.png", "wb") as f:
+        f.write(png)
+    print(f"screenshot: {len(png)} bytes, saved to tmp/ws_screenshot.png")
 
 
 @pytest.mark.asyncio
@@ -88,7 +89,9 @@ async def test_take_screenshot_with_overlay(client: PortalWSClient):
     png = await client.take_screenshot(hide_overlay=False)
     assert isinstance(png, bytes)
     assert png[:4] == b"\x89PNG"
-    print(f"screenshot(overlay): {len(png)} bytes")
+    with open("tmp/ws_screenshot_overlay.png", "wb") as f:
+        f.write(png)
+    print(f"screenshot(overlay): {len(png)} bytes, saved to tmp/ws_screenshot_overlay.png")
 
 
 # ---------- Action methods ----------
@@ -166,7 +169,7 @@ async def test_concurrent_requests(client: PortalWSClient):
 @pytest.mark.asyncio
 async def test_auto_reconnect():
     """Verify that calling a method after disconnect triggers reconnect."""
-    ws = PortalWSClient(HOST, PORT, token=TOKEN)
+    ws = PortalWSClient(BASE_URL, token=TOKEN)
     await ws.connect()
     # Force close
     await ws.close()

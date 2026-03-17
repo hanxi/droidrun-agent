@@ -37,7 +37,7 @@ class PortalWSClient:
 
     Usage::
 
-        async with PortalWSClient("192.168.1.100", 8081, token="TOKEN") as ws:
+        async with PortalWSClient("ws://192.168.1.100:8081", token="TOKEN") as ws:
             await ws.tap(200, 400)
             state = await ws.get_state()
             png = await ws.take_screenshot()
@@ -45,13 +45,11 @@ class PortalWSClient:
 
     def __init__(
         self,
-        host: str,
-        port: int = 8081,
+        base_url: str = "ws://localhost:8081",
         token: str = "",
         timeout: float = 10.0,
     ) -> None:
-        self.host = host
-        self.port = port
+        self.base_url = base_url.rstrip("/")
         self.token = token
         self.timeout = timeout
         self._ws: ClientConnection | None = None
@@ -61,7 +59,7 @@ class PortalWSClient:
 
     @property
     def _url(self) -> str:
-        return f"ws://{self.host}:{self.port}/?token={self.token}"
+        return f"{self.base_url}/?token={self.token}"
 
     # ------------------------------------------------------------------
     # Connection management
@@ -77,7 +75,7 @@ class PortalWSClient:
             raise PortalConnectionError(f"Cannot connect to {self._url}: {exc}") from exc
         self._closed = False
         self._listener_task = asyncio.create_task(self._listen())
-        logger.debug("WebSocket connected to %s:%s", self.host, self.port)
+        logger.debug("WebSocket connected to %s", self.base_url)
 
     async def close(self) -> None:
         """Gracefully close the WebSocket connection."""

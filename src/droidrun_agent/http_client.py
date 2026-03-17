@@ -198,7 +198,8 @@ class PortalHTTPClient:
         """
         Take device screenshot. Returns PNG bytes.
 
-        The HTTP endpoint returns base64-encoded PNG inside a JSON envelope.
+        The HTTP endpoint returns binary PNG directly.
+        Falls back to JSON envelope parsing for compatibility.
         """
         params: dict[str, Any] = {}
         if not hide_overlay:
@@ -227,17 +228,45 @@ class PortalHTTPClient:
 
         content_type = resp.headers.get("content-type", "")
 
-        # Binary PNG response
+        # Binary PNG response (check content-type and magic bytes)
         if "image/" in content_type or "octet-stream" in content_type:
             return resp.content
+        if resp.content[:4] == b"\x89PNG":
+            return resp.content
 
-        # JSON envelope with base64 PNG
+        # JSON envelope with base64 PNG.
+        # NOTE: We intentionally avoid _unwrap() here because it applies
+        # json.loads() to string values, which can over-parse the base64 data.
         data = resp.json()
-        inner = self._unwrap(data) if isinstance(data, dict) else data
-        if isinstance(inner, str):
-            return base64.b64decode(inner)
 
-        raise PortalResponseError(f"Unexpected screenshot response format: {type(inner)}")
+        # Check for server-side error envelope (HTTP 200 but JSON error body)
+        if isinstance(data, dict) and "error" in data:
+            raise PortalResponseError(
+                f"Screenshot failed: {data.get('error')} (status={data.get('status')})"
+            )
+
+        # Direct base64 string
+        if isinstance(data, str):
+            return base64.b64decode(data)
+
+        if isinstance(data, dict):
+            # Extract raw value from envelope without json.loads
+            raw = data.get("result") or data.get("data")
+            if isinstance(raw, str):
+                return base64.b64decode(raw)
+            # Nested dict – look for a base64-encoded PNG in values
+            target = raw if isinstance(raw, dict) else data
+            for val in target.values():
+                if isinstance(val, str) and len(val) > 100:
+                    try:
+                        decoded = base64.b64decode(val)
+                        if decoded[:4] == b"\x89PNG":
+                            return decoded
+                    except Exception:
+                        continue
+
+        detail = f"keys={list(data.keys())}" if isinstance(data, dict) else f"type={type(data)}"
+        raise PortalResponseError(f"Unexpected screenshot response format: {detail}")
 
     # ------------------------------------------------------------------
     # POST endpoints

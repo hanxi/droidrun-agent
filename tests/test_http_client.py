@@ -104,7 +104,9 @@ async def test_take_screenshot(client: PortalHTTPClient):
     assert isinstance(png, bytes)
     assert len(png) > 100
     assert png[:4] == b"\x89PNG", "Expected PNG magic bytes"
-    print(f"screenshot: {len(png)} bytes")
+    with open("tmp/http_screenshot.png", "wb") as f:
+        f.write(png)
+    print(f"screenshot: {len(png)} bytes, saved to tmp/http_screenshot.png")
 
 
 @pytest.mark.asyncio
@@ -112,7 +114,9 @@ async def test_take_screenshot_with_overlay(client: PortalHTTPClient):
     png = await client.take_screenshot(hide_overlay=False)
     assert isinstance(png, bytes)
     assert png[:4] == b"\x89PNG"
-    print(f"screenshot(overlay): {len(png)} bytes")
+    with open("tmp/http_screenshot_overlay.png", "wb") as f:
+        f.write(png)
+    print(f"screenshot(overlay): {len(png)} bytes, saved to tmp/http_screenshot_overlay.png")
 
 
 # ---------- POST endpoints ----------

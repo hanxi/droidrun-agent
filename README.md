@@ -1,10 +1,10 @@
-# droidrun-agent
+# [droidrun-agent](https://github.com/hanxi/droidrun-agent)
 
 [![PyPI version](https://img.shields.io/pypi/v/droidrun-agent)](https://pypi.org/project/droidrun-agent/)
 [![Python](https://img.shields.io/pypi/pyversions/droidrun-agent)](https://pypi.org/project/droidrun-agent/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Async Python client for the [DroidRun Portal](https://github.com/hanxi/droidrun-agent) local API. Provides both HTTP and WebSocket clients to control Android devices through Portal's accessibility service.
+Async Python client for the [DroidRun Portal](https://github.com/droidrun/droidrun-portal) local API. Provides both HTTP and WebSocket clients to control Android devices through Portal's accessibility service.
 
 ## Features
 
@@ -64,7 +64,7 @@ import asyncio
 from droidrun_agent import PortalWSClient
 
 async def main():
-    async with PortalWSClient("192.168.1.100", port=8081, token="YOUR_TOKEN") as ws:
+    async with PortalWSClient("ws://192.168.1.100:8081", token="YOUR_TOKEN") as ws:
         # Tap on screen coordinates
         await ws.tap(200, 400)
 
@@ -82,6 +82,11 @@ async def main():
 
 asyncio.run(main())
 ```
+
+## Documentation
+
+For detailed API documentation of the DroidRun Portal local API, see:
+- [Local API Documentation](https://github.com/droidrun/droidrun-portal/blob/main/docs/local-api.md)
 
 ## API Reference
 

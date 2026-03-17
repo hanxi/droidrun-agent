@@ -63,7 +63,7 @@ Communicates with Portal's WebSocket server (default port 8081) using JSON-RPC s
 ```python
 from droidrun_agent import PortalWSClient
 
-async with PortalWSClient(host="192.168.1.100", port=8081, token="YOUR_TOKEN") as ws:
+async with PortalWSClient("ws://192.168.1.100:8081", token="YOUR_TOKEN") as ws:
     await ws.tap(200, 400)
     state = await ws.get_state()
     png = await ws.take_screenshot()
@@ -120,7 +120,7 @@ async def demo_http():
         print(f"Screenshot: {len(png)} bytes")
 
 async def demo_ws():
-    async with PortalWSClient("localhost", 8081, token="YOUR_TOKEN") as ws:
+    async with PortalWSClient("ws://localhost:8081", token="YOUR_TOKEN") as ws:
         print("Version:", await ws.get_version())
         print("Time:", await ws.get_time())
 
