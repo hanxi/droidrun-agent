@@ -1,16 +1,17 @@
 ---
 name: portal-client
-description: DroidRun Portal HTTP/WebSocket client. Controls Android devices via HTTP or WebSocket, supporting tap, swipe, screenshot, text input, UI state retrieval and more. Use this skill when the user needs to interact with an Android device running DroidRun Portal.
+description: DroidRun Portal HTTP/WebSocket/MCP client. Controls Android devices via HTTP, WebSocket, or MCP server, supporting tap, swipe, screenshot, text input, UI state retrieval and more. Use this skill when the user needs to interact with an Android device running DroidRun Portal.
 ---
 
 # Portal Client
 
-Provides two async clients, `PortalHTTPClient` and `PortalWSClient`, for communicating with Android devices running DroidRun Portal. All methods are `async` and support `async with` context managers.
+Provides two async clients (`PortalHTTPClient` and `PortalWSClient`), a configuration helper (`PortalConfig`), and a built-in MCP server for communicating with Android devices running DroidRun Portal. All client methods are `async` and support `async with` context managers.
 
 ## Installation
 
 ```bash
-cd droidrun-agent && uv sync
+cd droidrun-agent && uv sync              # core only
+cd droidrun-agent && uv sync --extra mcp  # with MCP server support
 ```
 
 ## PortalHTTPClient
@@ -132,4 +133,89 @@ async def demo_ws():
 
 asyncio.run(demo_http())
 asyncio.run(demo_ws())
+```
+
+## PortalConfig
+
+Helper dataclass for managing connection settings. Supports direct construction or loading from environment variables.
+
+```python
+from droidrun_agent import PortalConfig
+
+# Direct construction
+config = PortalConfig(base_url="http://192.168.1.100:8080", token="YOUR_TOKEN")
+client = config.create_client()
+
+# Load from environment variables
+config = PortalConfig.from_env()
+client = config.create_client()
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `base_url` | `str` | (required) | Portal HTTP or WebSocket base URL |
+| `token` | `str` | (required) | Bearer authentication token |
+| `timeout` | `float` | `10.0` | Request timeout in seconds |
+| `transport` | `str` | `"http"` | `"http"` or `"ws"` |
+
+Environment variables for `from_env()`: `PORTAL_BASE_URL`, `PORTAL_TOKEN`, `PORTAL_TIMEOUT`, `PORTAL_TRANSPORT`.
+
+## MCP Server
+
+A built-in MCP (Model Context Protocol) server exposes all Portal operations as tools for AI agent integration. Requires the `mcp` optional dependency (`pip install droidrun-agent[mcp]`).
+
+### Starting the server
+
+```bash
+# Via CLI entry point
+droidrun-agent --mcp
+
+# Or as a Python module
+python -m droidrun_agent --mcp
+```
+
+The server reads `PORTAL_BASE_URL`, `PORTAL_TOKEN`, `PORTAL_TIMEOUT`, and `PORTAL_TRANSPORT` from environment variables and communicates over stdio.
+
+### MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `portal_ping` | Health check (HTTP only) |
+| `portal_tap` | Tap screen coordinates |
+| `portal_swipe` | Swipe gesture |
+| `portal_screenshot` | Take screenshot, returns PNG image |
+| `portal_get_state` | Get simplified UI state |
+| `portal_get_state_full` | Get full UI state (a11y tree + phone state) |
+| `portal_get_a11y_tree` | Get simplified accessibility tree (HTTP only) |
+| `portal_get_a11y_tree_full` | Get full accessibility tree (HTTP only) |
+| `portal_get_phone_state` | Get phone state info (HTTP only) |
+| `portal_get_version` | Get Portal app version |
+| `portal_get_packages` | List launchable packages |
+| `portal_global_action` | Execute accessibility global action (1=Back, 2=Home, 3=Recents) |
+| `portal_start_app` | Launch an app by package name |
+| `portal_stop_app` | Stop an app |
+| `portal_input_text` | Input text into focused field |
+| `portal_clear_input` | Clear focused input field |
+| `portal_press_key` | Send Android key code (66=Enter, 3=Home, 4=Back) |
+| `portal_set_overlay_offset` | Set overlay vertical offset |
+| `portal_get_time` | Get device timestamp (WebSocket only) |
+| `portal_install` | Install APK(s) from URL(s) (WebSocket only) |
+
+### openclaw integration
+
+Register as an openclaw MCP skill:
+
+```json
+{
+  "mcpServers": {
+    "droidrun-agent": {
+      "command": "uvx",
+      "args": ["droidrun-agent", "--mcp"],
+      "env": {
+        "PORTAL_BASE_URL": "http://192.168.1.100:8080",
+        "PORTAL_TOKEN": "YOUR_TOKEN"
+      }
+    }
+  }
+}
 ```

@@ -10,6 +10,7 @@ Async Python client for the [DroidRun Portal](https://github.com/droidrun/droidr
 
 - **HTTP Client** (`PortalHTTPClient`) - Communicates with Portal's HTTP server (default port 8080)
 - **WebSocket Client** (`PortalWSClient`) - Communicates with Portal's WebSocket server (default port 8081) using JSON-RPC style messages
+- **MCP Server** - Exposes all Portal operations as [MCP](https://modelcontextprotocol.io/) tools for AI agent integration (e.g. openclaw)
 - Bearer token authentication
 - Async context manager support (`async with`)
 - Automatic reconnection for WebSocket client
@@ -21,12 +22,19 @@ Async Python client for the [DroidRun Portal](https://github.com/droidrun/droidr
 pip install droidrun-agent
 ```
 
+To use the MCP server for AI agent integration:
+
+```bash
+pip install droidrun-agent[mcp]
+```
+
 Or install from source using [uv](https://docs.astral.sh/uv/):
 
 ```bash
 git clone https://github.com/hanxi/droidrun-agent.git
 cd droidrun-agent
-uv sync
+uv sync              # core only
+uv sync --extra mcp  # with MCP server support
 ```
 
 ## Quick Start
@@ -133,11 +141,99 @@ Supports all methods from HTTP client, plus:
 | `PortalTimeoutError` | Request timed out |
 | `PortalResponseError` | Server returned an unexpected or error response |
 
+### PortalConfig
+
+Helper dataclass for managing connection settings. Supports loading from environment variables.
+
+```python
+from droidrun_agent import PortalConfig
+
+# Direct construction
+config = PortalConfig(base_url="http://192.168.1.100:8080", token="YOUR_TOKEN")
+client = config.create_client()
+
+# Load from environment variables
+config = PortalConfig.from_env()
+client = config.create_client()
+```
+
+Environment variables:
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `PORTAL_BASE_URL` | Yes | - | Portal HTTP or WebSocket base URL |
+| `PORTAL_TOKEN` | Yes | - | Bearer authentication token |
+| `PORTAL_TIMEOUT` | No | `10.0` | Request timeout in seconds |
+| `PORTAL_TRANSPORT` | No | `http` | Transport type: `http` or `ws` |
+
+## MCP Server
+
+droidrun-agent includes a built-in [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that exposes all Portal operations as tools. This enables AI agents like [openclaw](https://github.com/openclaw/openclaw) to control Android devices.
+
+### Start the MCP Server
+
+```bash
+# Via CLI entry point
+droidrun-agent --mcp
+
+# Or as a Python module
+python -m droidrun_agent --mcp
+```
+
+The server reads connection settings from environment variables (`PORTAL_BASE_URL`, `PORTAL_TOKEN`, etc.) and communicates over stdio.
+
+### Available MCP Tools
+
+| Tool | Description |
+|---|---|
+| `portal_ping` | Health check (HTTP only) |
+| `portal_tap` | Tap screen coordinates |
+| `portal_swipe` | Swipe gesture |
+| `portal_screenshot` | Take screenshot, returns PNG image |
+| `portal_get_state` | Get simplified UI state |
+| `portal_get_state_full` | Get full UI state (a11y tree + phone state) |
+| `portal_get_a11y_tree` | Get simplified accessibility tree (HTTP only) |
+| `portal_get_a11y_tree_full` | Get full accessibility tree (HTTP only) |
+| `portal_get_phone_state` | Get phone state info (HTTP only) |
+| `portal_get_version` | Get Portal app version |
+| `portal_get_packages` | List launchable packages |
+| `portal_global_action` | Execute accessibility global action |
+| `portal_start_app` | Launch an app |
+| `portal_stop_app` | Stop an app |
+| `portal_input_text` | Input text |
+| `portal_clear_input` | Clear focused input field |
+| `portal_press_key` | Send Android key code |
+| `portal_set_overlay_offset` | Set overlay vertical offset |
+| `portal_get_time` | Get device timestamp (WebSocket only) |
+| `portal_install` | Install APK(s) from URL(s) (WebSocket only) |
+
+### openclaw Integration
+
+To register droidrun-agent as an openclaw skill, add it to your openclaw MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "droidrun-agent": {
+      "command": "uvx",
+      "args": ["droidrun-agent", "--mcp"],
+      "env": {
+        "PORTAL_BASE_URL": "http://192.168.1.100:8080",
+        "PORTAL_TOKEN": "YOUR_TOKEN"
+      }
+    }
+  }
+}
+```
+
+A ready-to-use skill manifest is also provided at `openclaw.skill.json` in the project root.
+
 ## Requirements
 
 - Python >= 3.11
 - [httpx](https://www.python-httpx.org/) >= 0.28.1
 - [websockets](https://websockets.readthedocs.io/) >= 12.0
+- [mcp](https://pypi.org/project/mcp/) >= 1.26.0 (optional, for MCP server)
 
 ## Development Workflow
 

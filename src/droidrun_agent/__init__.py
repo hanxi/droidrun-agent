@@ -1,5 +1,6 @@
 """DroidRun Agent - HTTP and WebSocket clients for Portal local API."""
 
+from .config import PortalConfig
 from .exceptions import (
     PortalAuthError,
     PortalConnectionError,
@@ -11,6 +12,7 @@ from .http_client import PortalHTTPClient
 from .ws_client import PortalWSClient
 
 __all__ = [
+    "PortalConfig",
     "PortalHTTPClient",
     "PortalWSClient",
     "PortalError",
