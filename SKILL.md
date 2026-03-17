@@ -210,7 +210,7 @@ Register as an openclaw MCP skill:
   "mcpServers": {
     "droidrun-agent": {
       "command": "uvx",
-      "args": ["droidrun-agent", "--mcp"],
+      "args": ["--with", "mcp", "droidrun-agent", "--mcp"],
       "env": {
         "PORTAL_BASE_URL": "http://192.168.1.100:8080",
         "PORTAL_TOKEN": "YOUR_TOKEN"

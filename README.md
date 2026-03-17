@@ -216,7 +216,7 @@ To register droidrun-agent as an openclaw skill, add it to your openclaw MCP con
   "mcpServers": {
     "droidrun-agent": {
       "command": "uvx",
-      "args": ["droidrun-agent", "--mcp"],
+      "args": ["--with", "mcp", "droidrun-agent", "--mcp"],
       "env": {
         "PORTAL_BASE_URL": "http://192.168.1.100:8080",
         "PORTAL_TOKEN": "YOUR_TOKEN"

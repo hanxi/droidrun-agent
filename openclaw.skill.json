@@ -4,7 +4,7 @@
   "description": "Controls Android devices via DroidRun Portal. Supports tap, swipe, screenshot, text input, app management, UI state retrieval and more.",
   "transport": "stdio",
   "command": "uvx",
-  "args": ["droidrun-agent", "--mcp"],
+  "args": ["--with", "mcp", "droidrun-agent", "--mcp"],
   "config_schema": {
     "PORTAL_BASE_URL": {
       "type": "string",
