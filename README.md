@@ -4,6 +4,8 @@
 [![Python](https://img.shields.io/pypi/pyversions/droidrun-agent)](https://pypi.org/project/droidrun-agent/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+[中文快速指南](./README-zh.md)
+
 Async Python client for the [DroidRun Portal](https://github.com/droidrun/droidrun-portal) local API. Provides both HTTP and WebSocket clients to control Android devices through Portal's accessibility service.
 
 ## Features
