@@ -1,9 +1,9 @@
 ---
-name: portal-client
+name: droidrun-agent
 description: DroidRun Portal HTTP/WebSocket/MCP client. Controls Android devices via HTTP, WebSocket, or MCP server, supporting tap, swipe, screenshot, text input, UI state retrieval and more. Use this skill when the user needs to interact with an Android device running DroidRun Portal.
 ---
 
-# Portal Client
+# Droidrun Agent
 
 Provides two async clients (`PortalHTTPClient` and `PortalWSClient`), a configuration helper (`PortalConfig`), and a built-in MCP server for communicating with Android devices running DroidRun Portal. All client methods are `async` and support `async with` context managers.
 
